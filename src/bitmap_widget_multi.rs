@@ -5,6 +5,7 @@ pub use crate::multimap::{
     BitMapText, ColorWithThickness, CoordinatePoint, CoordinateRect, Data, FontOptions, Overlay,
     RenderProblem,
 };
+// use egui;
 use egui::Color32 as Color;
 use egui_extras::RetainedImage as RenderedImage;
 
@@ -329,17 +330,21 @@ impl<Key: std::hash::Hash + Clone + Eq + Debug> MultiBitmapWidget<Key> {
         let size = self.update_size(ui.available_size());
         self.render(state);
         let rendered = self.rendered_image.texture_id(ui.ctx());
-        let image = egui::Widget::ui(
-            egui::Image::new(rendered, size).sense(egui::Sense::click_and_drag()),
-            ui,
+        // let image = egui::Widget::ui(
+        //     egui::Image::new(rendered, size).sense(egui::Sense::click_and_drag()),
+        //     ui,
+        // );
+        let image_response = ui.add(
+            egui::Image::new((rendered, egui::Vec2::new(size[0], size[1])))
+                .sense(egui::Sense::click_and_drag()),
         );
 
-        let mouse = image.hover_pos();
-        let rect = image.rect;
+        let mouse = image_response.hover_pos();
+        let rect = image_response.rect;
         state.mouse = self.convert_window2bitmap(rect, mouse, size, &state.multimap);
         let mouse_pos = state.mouse.get_pos().cloned();
 
-        let image = image.context_menu(|ui| {
+        let image = image_response.context_menu(|ui| {
             ui.vertical(|ui| {
                 if ui.button(&state.localization.text_home).clicked() {
                     self.showmap.home(state.get_inner_mut());
@@ -391,12 +396,12 @@ impl<Key: std::hash::Hash + Clone + Eq + Debug> MultiBitmapWidget<Key> {
 
         state.clicked = false;
 
-        if image.double_clicked() {
+        if image_response.double_clicked() {
             if let Some(pos) = &mouse_pos {
                 self.showmap.center_to(pos, state.change_rect());
                 self.needs_rendering = true;
             }
-        } else if image.clicked() {
+        } else if image_response.clicked() {
             if let Some(pos) = &mouse_pos {
                 state.clicked = true;
                 self.showmap.select(
@@ -407,19 +412,19 @@ impl<Key: std::hash::Hash + Clone + Eq + Debug> MultiBitmapWidget<Key> {
                 self.needs_rendering = true;
             }
         }
-        if image.drag_started() {
+        if image_response.drag_started() {
             if let Some(pos) = &mouse_pos {
                 self.showmap.drag_start(pos);
                 self.needs_rendering = true;
             }
-        } else if image.drag_released() {
+        } else if image_response.drag_stopped() {
             if let Some(pos) = &mouse_pos {
                 self.showmap.drag_release(Some(pos), state.change_rect());
             } else {
                 self.showmap.drag_release(None, state.change_rect());
             }
             self.needs_rendering = true;
-        } else if image.dragged() {
+        } else if image_response.dragged() {
             if let Some(pos) = &mouse_pos {
                 if self.showmap.drag_is_ongoing(pos) {
                     self.needs_rendering = true;
@@ -428,7 +433,7 @@ impl<Key: std::hash::Hash + Clone + Eq + Debug> MultiBitmapWidget<Key> {
         }
 
         // keyboard movement and zoom and homeing
-        if image.hovered() && ui.ctx().memory(|x| x.focus().is_none()) {
+        if image_response.hovered() && !image_response.has_focus() {
             if let Some((key, modifiers)) = ui.ctx().input(|x| {
                 let keys = &x.keys_down;
                 if keys.len() == 1 {
@@ -452,8 +457,7 @@ impl<Key: std::hash::Hash + Clone + Eq + Debug> MultiBitmapWidget<Key> {
                     }
                 }
                 // keyboard zoom
-                for (needed_key, zoom_increment) in
-                    [(egui::Key::PlusEquals, 1), (egui::Key::Minus, -1)]
+                for (needed_key, zoom_increment) in [(egui::Key::Equals, 1), (egui::Key::Minus, -1)]
                 {
                     if key == needed_key && modifiers.is_none() {
                         self.showmap.zoom(zoom_increment, state.change_rect());
@@ -468,8 +472,9 @@ impl<Key: std::hash::Hash + Clone + Eq + Debug> MultiBitmapWidget<Key> {
             };
         }
         // mouse scroll
-        if image.hovered() {
-            let (scroll_delta, modifiers) = ui.ctx().input(|x| (x.scroll_delta, x.modifiers));
+        if image_response.hovered() {
+            // let (scroll_delta, modifiers) = ui.ctx().input(|x| (x.scroll_delta, x.modifiers));
+            let (scroll_delta, modifiers) = ui.ctx().input(|x| (x.raw_scroll_delta, x.modifiers));
             let scroll_delta = if modifiers.shift {
                 scroll_delta.x * 5. //TODO: make this magnifier configurable
             } else {
