@@ -1,5 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
-use eframe::egui;
+                                                                   // use eframe::egui;
 use egui_heatmap::{
     Color, ColorWithThickness, MultiBitmapWidget, MultiBitmapWidgetSettings, MultiMapPosition,
     ShowState,
@@ -7,14 +7,14 @@ use egui_heatmap::{
 
 fn main() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(1000.0, 800.0)),
+        // initial_window_size: Some(egui::vec2(1000.0, 800.0)),
         ..Default::default()
     };
 
     eframe::run_native(
         "Multi-Map: Many data",
         options,
-        Box::new(|_cc| Box::<MyApp>::default()),
+        Box::new(|_cc| Ok(Box::<MyApp>::default())),
     )
 }
 
@@ -83,16 +83,18 @@ impl Default for MyApp {
 }
 
 impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+    fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
+        eframe::egui::CentralPanel::default().show(ctx, |ui| {
             ui.with_layout(
-                egui::Layout::left_to_right(egui::Align::BOTTOM).with_cross_justify(true),
+                eframe::egui::Layout::left_to_right(eframe::egui::Align::BOTTOM)
+                    .with_cross_justify(true),
                 |ui| {
                     ui.vertical(|ui| {
                         ui.label("bla");
                     });
                     ui.with_layout(
-                        egui::Layout::bottom_up(egui::Align::LEFT).with_cross_justify(true),
+                        eframe::egui::Layout::bottom_up(eframe::egui::Align::LEFT)
+                            .with_cross_justify(true),
                         |ui| {
                             let problem = self.state.render_problem().map_or_else(
                                 || "no problems".to_string(),
