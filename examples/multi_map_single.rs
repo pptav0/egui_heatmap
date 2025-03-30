@@ -8,17 +8,16 @@ use egui_heatmap::{
 
 fn main() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(1000.0, 800.0)),
+        // initial_window_size: Some(egui::vec2(1000.0, 800.0)),
         ..Default::default()
     };
 
     eframe::run_native(
         "Multi-Map: Single data",
         options,
-        Box::new(|_cc| Box::<MyApp>::default()),
+        Box::new(|_cc| Ok(Box::<MyApp>::default())),
     )
 }
-
 
 struct MyApp {
     bitmap: MultiBitmapWidget<usize>,
